@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>少林寺拳法 大会進行管理</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:#f7f7f6;color:#1a1a1a;min-height:100vh}
+.app{max-width:1100px;margin:0 auto;padding:1.25rem}
+
+/* ── ホーム ── */
+.home{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.home-box{width:min(400px,100%)}
+.org{font-size:11px;font-weight:500;letter-spacing:.12em;color:#999;text-transform:uppercase;margin-bottom:1.25rem}
+.htitle{font-size:26px;font-weight:700;letter-spacing:-.02em;color:#111;margin-bottom:.4rem}
+.hsub{font-size:13px;color:#999;margin-bottom:2.5rem;line-height:1.6}
+.hdivider{height:1px;background:#e8e8e6;margin-bottom:2rem}
+.hbtn{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;background:#fff;border:1px solid #e5e5e3;border-radius:10px;cursor:pointer;transition:border-color .15s;text-align:left;width:100%;margin-bottom:.6rem}
+.hbtn:hover{border-color:#999}
+.hbtn-l{font-size:14px;font-weight:600;color:#111;margin-bottom:2px}
+.hbtn-d{font-size:11px;color:#aaa}
+.hbtn-r{font-size:18px;color:#ccc;margin-left:1rem;flex-shrink:0}
+
+/* ── 共通 ── */
+.wrap{padding:1rem}
+.phead{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;flex-wrap:wrap}
+.ptitle{font-size:17px;font-weight:700}
+.backbtn{background:none;border:1px solid #e0e0de;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;color:#555;white-space:nowrap;transition:all .15s}
+.backbtn:hover{background:#f0f0ee;border-color:#aaa}
+.loading{text-align:center;padding:4rem;color:#aaa;font-size:13px}
+.empty{text-align:center;padding:3rem;color:#ccc;font-size:13px}
+
+/* ── 大会リスト ── */
+.tlist{display:flex;flex-direction:column;gap:6px}
+.titem{background:#fff;border:1px solid #e8e8e6;border-radius:10px;padding:.9rem 1.1rem;cursor:pointer;transition:border-color .15s;display:flex;align-items:center;gap:10px}
+.titem:hover{border-color:#aaa}
+.tinfo{flex:1;min-width:0}
+.tname{font-size:14px;font-weight:600;color:#111}
+.tmeta{font-size:11px;color:#aaa;margin-top:2px}
+.tdel{background:none;border:1px solid #fdd;border-radius:6px;padding:3px 8px;cursor:pointer;color:#c44;font-size:11px;flex-shrink:0}
+.tdel:hover{background:#fff5f5}
+.tarr{color:#ccc;font-size:18px;flex-shrink:0}
+
+/* ── 作成画面 ── */
+.scard{background:#fff;border:1px solid #eee;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.slabel{font-size:11px;font-weight:600;color:#888;margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.flabel{font-size:12px;color:#666;font-weight:500;margin-bottom:.3rem;display:block}
+.inp{width:100%;padding:9px 12px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:14px;font-family:inherit;color:#1a1a1a;background:#fff;transition:border-color .15s}
+.inp:focus{outline:none;border-color:#1a1a1a}
+.rrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rrow .inp{flex:1}
+.delbtn{background:none;border:1px solid #fecaca;border-radius:6px;padding:6px 10px;cursor:pointer;color:#E24B4A;font-size:13px;flex-shrink:0}
+.addbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1.5px dashed #ddd;border-radius:8px;font-size:12px;color:#888;cursor:pointer;background:none;transition:all .15s}
+.addbtn:hover{border-color:#888;color:#444}
+.cfooter{display:flex;gap:8px;justify-content:flex-end;margin-top:1.5rem}
+.btn{padding:9px 18px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;border:1.5px solid #ddd;background:#fff;color:#1a1a1a}
+.btn:hover{background:#f5f5f5}
+.btnp{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btnp:hover{opacity:.85}
+
+/* ── ダッシュボード ── */
+.dhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.dtitle{font-size:15px;font-weight:600}
+.syncpill{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#888;padding:4px 10px;background:#fff;border:1px solid #eee;border-radius:20px}
+.sdot{width:7px;height:7px;border-radius:50%;background:#ccc;transition:background .4s}
+.sdot.ok{background:#1D9E75}.sdot.err{background:#E24B4A}
+.rtabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+.rtab{padding:6px 12px;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer;background:#fff;color:#666;white-space:nowrap;transition:all .15s}
+.rtab.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.rtabadd{padding:5px 10px;border:1.5px dashed #ddd;border-radius:8px;font-size:12px;cursor:pointer;background:none;color:#aaa;transition:all .15s}
+.rtabadd:hover{border-color:#888;color:#444}
+.sumbar{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:1rem}
+.sumcard{background:#fff;border-radius:8px;padding:.6rem;text-align:center;border:1px solid #eee}
+.sumn{font-size:20px;font-weight:600}
+.suml{font-size:9px;color:#888;margin-top:1px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.75rem;padding:.5rem .75rem;background:#fff;border-radius:8px;border:1px solid #eee;align-items:center}
+.legitem{display:flex;align-items:center;gap:5px;font-size:11px;color:#666}
+.legdot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.alertwrap{margin-bottom:.75rem}
+.alertrow{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff5f5;border:1px solid #E24B4A;border-radius:8px;font-size:12px;color:#a32d2d;margin-bottom:4px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ccard{background:#fff;border:1px solid #eee;border-radius:12px;padding:.85rem;cursor:pointer;transition:all .15s}
+.ccard:hover{border-color:#bbb;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.ccard.stopped{border:2px solid #E24B4A;background:#fff8f8}
+.ccard.done{border-color:#1D9E75;background:#f5fbf8}
+.ccard.last1{border:2px solid #BA7517;background:#fffbf0}
+.ccard.last3{border:1.5px solid #EF9F27;background:#fffdf5}
+.ctop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px}
+.cnum{font-size:20px;font-weight:600;line-height:1}
+.badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;margin-top:2px;white-space:nowrap}
+.brun{background:#fff3cd;color:#856404}.bdone{background:#d1fae5;color:#065f46}
+.bstop{background:#E24B4A;color:#fff}.bwait{background:#f0f0f0;color:#666}
+.bl1{background:#BA7517;color:#fff}.bl3{background:#EF9F27;color:#5a3200}
+.bedit{background:#e0e7ff;color:#3730a3}
+.ccat{font-size:10px;color:#888;margin-bottom:7px;line-height:1.4;min-height:28px}
+.barwrap{background:#f0f0f0;border-radius:3px;height:5px;margin-bottom:4px;overflow:hidden}
+.barfill{height:5px;border-radius:3px}
+.ccount{font-size:10px;color:#999;display:flex;justify-content:space-between}
+.tdots{display:flex;flex-wrap:wrap;gap:2px;margin-top:5px}
+.tdot{width:8px;height:8px;border-radius:1px;flex-shrink:0}
+.edithint{font-size:9px;color:#a5b4fc;margin-top:6px}
+
+/* ── モーダル ── */
+.overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-start;justify-content:center;padding:5vh 8px 8px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:1.25rem;width:min(480px,100%);max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.mtitle{font-size:16px;font-weight:600}
+.xbtn{background:none;border:none;cursor:pointer;color:#999;font-size:22px;padding:0 4px;line-height:1}
+.tabbar{display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid #eee;padding-bottom:.75rem}
+.mtab{padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid transparent;color:#888;background:none}
+.mtab.on{background:#1a1a1a;color:#fff}
+.teamlist{display:flex;flex-direction:column;gap:5px;margin-bottom:1rem}
+.teamrow{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid #eee;transition:background .15s}
+.teamrow:hover{background:#f8f8f8}
+.teamrow.done{opacity:.5}.teamrow.cur{background:#eff6ff;border-color:#93c5fd}
+.teamrow.done .tn{text-decoration:line-through;color:#aaa}
+.ti{font-size:11px;color:#aaa;width:20px;flex-shrink:0}.ta{font-size:10px;color:#888;min-width:60px}.tn{flex:1;font-size:12px}
+.macts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
+.mbtn{padding:8px 14px;border:1px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#1a1a1a;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.mbtn:hover{background:#f5f5f5}
+.mbtn.d{border-color:#E24B4A;color:#E24B4A}.mbtn.d:hover{background:#fff5f5}
+.mbtn.s{border-color:#1D9E75;color:#1D9E75}.mbtn.s:hover{background:#f0fdf4}
+.mbtn.p{background:#1a1a1a;color:#fff;border-color:#1a1a1a}.mbtn.p:hover{opacity:.85}
+.stopform{border:1.5px solid #E24B4A;border-radius:10px;padding:.85rem;background:#fff8f8;margin-bottom:1rem}
+.stopform textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:60px;margin-bottom:8px}
+.stopbanner{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:#fff5f5;border:1.5px solid #E24B4A;border-radius:10px;margin-bottom:12px;font-size:12px;color:#a32d2d}
+.stopbanner-l{font-weight:600;color:#E24B4A;margin-bottom:2px}
+.eplabel{font-size:11px;color:#666;font-weight:600;margin-bottom:6px;display:block}
+.erow{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.erow input{padding:7px 10px;border:1.5px solid #e5e5e5;border-radius:7px;font-size:12px;font-family:inherit;color:#1a1a1a;background:#fff}
+.erow input:focus{outline:none;border-color:#1a1a1a}
+.ea{flex:1;min-width:0}.en{flex:1.2;min-width:0}.ei{font-size:11px;color:#bbb;width:18px;flex-shrink:0;text-align:right}
+.ccgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.cccard{background:#fff;border:1.5px solid #eee;border-radius:10px;padding:.7rem;cursor:pointer;text-align:center;transition:border-color .15s}
+.cccard:hover{border-color:#888}.cccard.set{border-color:#1D9E75;background:#f5fbf8}
+.ccn{font-size:18px;font-weight:600;margin-bottom:3px}.ccc{font-size:9px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cct{font-size:9px;color:#bbb;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="overlay" id="ov"><div class="modal" id="mod"></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// ─────────────────────────────────────────
+// Firebase 初期化
+// ─────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:            "AIzaSyD9V0PN0cDS03yxLKLEmXsNNP13r-R0_0E",
+  authDomain:        "kantogakurenshorinji-progress.firebaseapp.com",
+  databaseURL:       "https://kantogakurenshorinji-progress-default-rtdb.firebaseio.com",
+  projectId:         "kantogakurenshorinji-progress",
+  storageBucket:     "kantogakurenshorinji-progress.firebasestorage.app",
+  messagingSenderId: "214167530097",
+  appId:             "1:214167530097:web:8decc086a778b07e2e89d0"
+});
+const db = firebase.database();
+
+// ─────────────────────────────────────────
+// Firebase パス
+//  sj/meta/{id}   大会定義（名前・ラウンド・コート割）
+//  sj/prog/{id}   進行状態（currentRound, courts進捗）
+// ─────────────────────────────────────────
+const META  = id => db.ref('sj/meta/'  + id);
+const PROG  = id => db.ref('sj/prog/'  + id);
+const METAS      = db.ref('sj/meta');
+
+// ─────────────────────────────────────────
+// アプリ変数
+// ─────────────────────────────────────────
+let TD   = null;   // 現在の大会定義
+let PROG_DATA = null; // 現在の進行状態
+let CUR_ID = null; // 現在開いている大会ID
+let progListener = null; // リアルタイムリスナー
+
+let modalCourtId = null;
+let modalTab = 'prog';
+let stopFormOpen = false;
+
+let draftTD = null;
+let createRI = 0;
+
+// ─────────────────────────────────────────
+// ユーティリティ
+// ─────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function show(html){ $('app').innerHTML = html; }
+
+function setSync(ok){
+  const d=$('sdot'), l=$('slabel');
+  if(d){ d.className='sdot '+(ok?'ok':'err'); }
+  if(l){ l.textContent = ok?'同期中':'オフライン'; }
+}
+
+function progCS(round, courtId){
+  if(!PROG_DATA.courts) PROG_DATA.courts = {};
+  const k = round+'_'+courtId;
+  if(!PROG_DATA.courts[k]) PROG_DATA.courts[k] = {current:0,stopped:false,stopReason:''};
+  return PROG_DATA.courts[k];
+}
+
+// ─────────────────────────────────────────
+// 保存
+// ─────────────────────────────────────────
+function saveMeta(){ META(CUR_ID).set(TD).catch(e=>console.error('meta save',e)); }
+function saveProg(){ PROG(CUR_ID).set(PROG_DATA).catch(e=>console.error('prog save',e)); }
+
+// ─────────────────────────────────────────
+// リアルタイムリスナー（進行状態のみ）
+// ─────────────────────────────────────────
+function startProgListener(id){
+  stopProgListener();
+  progListener = PROG(id);
+  progListener.on('value', snap=>{
+    setSync(true);
+    const val = snap.val();
+    if(!val) return;
+    PROG_DATA = {
+      currentRound: TD && TD.rounds.includes(val.currentRound) ? val.currentRound : (TD?TD.rounds[0]:''),
+      courts: val.courts || {}
+    };
+    // teamsがないコートを補完
+    if(TD) TD.rounds.forEach(r=>{ (TD.courts[r]||[]).forEach(c=>{ if(!c.teams) c.teams=[]; }); });
+    renderDash();
+    if(modalCourtId !== null) drawModal();
+  }, () => setSync(false));
+}
+function stopProgListener(){
+  if(progListener){ progListener.off(); progListener = null; }
+}
+
+// ─────────────────────────────────────────
+// ── HOME ──
+// ─────────────────────────────────────────
+function renderHome(){
+  stopProgListener();
+  TD = null; PROG_DATA = null; CUR_ID = null;
+  show(`
+    <div class="home"><div class="home-box">
+      <div class="org">関東学生少林寺拳法連盟</div>
+      <div class="htitle">大会進行管理</div>
+      <div class="hsub">コート割の作成・管理と試合進行の記録を行います</div>
+      <div class="hdivider"></div>
+      <button class="hbtn" onclick="renderNewTournament()">
+        <div><div class="hbtn-l">新規作成</div><div class="hbtn-d">大会名・ラウンド・コート割を入力して作成</div></div>
+        <div class="hbtn-r">›</div>
+      </button>
+      <button class="hbtn" onclick="renderList()">
+        <div><div class="hbtn-l">大会を選択</div><div class="hbtn-d">保存済みの大会から選んで開始</div></div>
+        <div class="hbtn-r">›</div>
+      </button>
+    </div></div>`);
+}
+
+// ─────────────────────────────────────────
+// ── 大会リスト ──
+// ─────────────────────────────────────────
+function renderList(){
+  show('<div class="loading">読み込み中...</div>');
+  METAS.once('value').then(snap=>{
+    const val = snap.val();
+    const list = val ? Object.values(val) : [];
+    show(`
+      <div class="wrap">
+        <div class="phead">
+          <button class="backbtn" onclick="renderHome()">← ホーム</button>
+          <div class="ptitle">大会を選択</div>
+        </div>
+        <div class="tlist">
+          ${list.length===0
+            ? '<div class="empty">保存された大会がありません</div>'
+            : list.map(td=>`
+                <div class="titem" onclick="openTournament('${esc(td.id)}')">
+                  <div class="tinfo">
+                    <div class="tname">${esc(td.name)}</div>
+                    <div class="tmeta">${td.rounds.length}ラウンド · 最大16コート</div>
+                  </div>
+                  <button class="tdel" onclick="event.stopPropagation();deleteTournament('${esc(td.id)}')">削除</button>
+                  <div class="tarr">›</div>
+                </div>`).join('')}
+        </div>
+      </div>`);
+  }).catch(e=>{
+    console.error('renderList error:', e);
+    show(`<div class="wrap">
+      <div class="phead"><button class="backbtn" onclick="renderHome()">← ホーム</button><div class="ptitle">大会を選択</div></div>
+      <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:1.5rem;font-size:13px;line-height:1.8">
+        <div style="font-weight:600;color:#E24B4A;margin-bottom:.75rem">⚠️ Firebase読み込みエラー</div>
+        <div style="color:#666">エラー内容：<code style="background:#f5f5f3;padding:2px 6px;border-radius:4px">${esc(String(e))}</code></div>
+      </div>
+    </div>`);
+  });
+}
+
+// ─────────────────────────────────────────
+// ── 大会を開く ──
+//  ① まず大会定義(meta)をFirebaseから取得
+//  ② 成功したらダッシュボードを描画
+//  ③ 進行状態のリアルタイムリスナーを開始
+// ─────────────────────────────────────────
+function openTournament(id){
+  show('<div class="loading">読み込み中...</div>');
+  META(id).once('value').then(snap=>{
+    const td = snap.val();
+    if(!td){ show('<div class="loading">大会データが見つかりません。大会一覧に戻ります。</div>'); setTimeout(renderList,1500); return; }
+    CUR_ID = id;
+    TD = clone(td);
+    // Firebaseは空配列を保存しないので、teamsがない場合は空配列に補完
+    TD.rounds.forEach(r=>{
+      if(!TD.courts[r]) TD.courts[r]=[];
+      TD.courts[r].forEach(c=>{ if(!c.teams) c.teams=[]; });
+    });
+    PROG_DATA = { currentRound: TD.rounds[0], courts: {} };
+    renderDash();
+    startProgListener(id);
+  }).catch(e=>{
+    console.error('openTournament error:', e);
+    show('<div class="loading">読み込みエラー。もう一度お試しください。</div>');
+    setTimeout(renderList, 2000);
+  });
+}
+
+function deleteTournament(id){
+  if(!confirm('この大会を削除しますか？')) return;
+  META(id).remove();
+  PROG(id).remove();
+  renderList();
+}
+
+// ─────────────────────────────────────────
+// ── 新規作成 ──
+// ─────────────────────────────────────────
+function renderNewTournament(){
+  draftTD = { id:'t'+Date.now(), name:'', rounds:['予選ラウンド'], courts:{} };
+  ensureDraftCourts();
+  createRI = 0;
+  _renderCreate();
+}
+
+function ensureDraftCourts(){
+  draftTD.rounds.forEach(r=>{
+    if(!draftTD.courts[r])
+      draftTD.courts[r] = Array.from({length:16},(_,i)=>({id:i+1,cat:'',teams:[]}));
+  });
+}
+
+function _renderCreate(){
+  show(`
+    <div class="wrap">
+      <div class="phead">
+        <button class="backbtn" onclick="renderHome()">← ホーム</button>
+        <div class="ptitle">新規大会を作成</div>
+      </div>
+      <div class="scard">
+        <div class="slabel">大会情報</div>
+        <label class="flabel">大会名</label>
+        <input class="inp" id="dname" value="${esc(draftTD.name)}" placeholder="例：第63回 少林寺拳法関東学生大会" oninput="draftTD.name=this.value" />
+      </div>
+      <div class="scard">
+        <div class="slabel">ラウンド設定</div>
+        ${draftTD.rounds.map((r,i)=>`
+          <div class="rrow">
+            <input class="inp" value="${esc(r)}" placeholder="ラウンド名" onchange="updateDraftRound(${i},this.value)" />
+            ${draftTD.rounds.length>1?`<button class="delbtn" onclick="delDraftRound(${i})">✕</button>`:''}
+          </div>`).join('')}
+        <button class="addbtn" onclick="addDraftRound()">＋ ラウンドを追加</button>
+      </div>
+      <div class="scard">
+        <div class="slabel">コート割</div>
+        <div id="crtabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1rem">
+          ${draftTD.rounds.map((r,i)=>`
+            <button class="rtab${i===createRI?' on':''}" onclick="selCreateRound(${i})">${esc(r)||'未設定'}</button>`).join('')}
+        </div>
+        <div id="ccarea"></div>
+      </div>
+      <div class="cfooter">
+        <button class="btn" onclick="renderHome()">キャンセル</button>
+        <button class="btn btnp" onclick="saveDraftAndOpen()">作成して開始 →</button>
+      </div>
+    </div>`);
+  _renderCreateCourts();
+}
+
+function selCreateRound(i){
+  createRI=i;
+  document.querySelectorAll('#crtabs .rtab').forEach((el,j)=>el.classList.toggle('on',j===i));
+  _renderCreateCourts();
+}
+
+function _renderCreateCourts(){
+  const r = draftTD.rounds[createRI];
+  const courts = draftTD.courts[r]||[];
+  $('ccarea').innerHTML = `
+    <div class="ccgrid">${courts.map(c=>`
+      <div class="cccard${c.cat||c.teams.length?' set':''}" onclick="openCCModal(${createRI},${c.id})">
+        <div class="ccn">${c.id}</div>
+        <div class="ccc">${esc(c.cat)||'未設定'}</div>
+        <div class="cct">${c.teams.length}チーム</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function openCCModal(ri, cid){
+  window._ccri = ri; window._ccid = cid;
+  const r = draftTD.rounds[ri];
+  const c = draftTD.courts[r].find(x=>x.id===cid);
+  const rows = Array.from({length:Math.max(c.teams.length,2)},(_,i)=>
+    buildERow('cc',i,c.teams[i]?.a||'',c.teams[i]?.n||'')).join('');
+  $('mod').innerHTML=`
+    <div class="mhead"><div class="mtitle">${c.id}コート — 設定</div><button class="xbtn" onclick="closeModal()">×</button></div>
+    <div style="font-size:11px;color:#999;margin-bottom:10px">${esc(r)}</div>
+    <label class="flabel">種目名</label>
+    <input class="inp" id="cccat" value="${esc(c.cat)}" placeholder="例：男子初段" style="margin-bottom:12px">
+    <span class="eplabel">出場チーム <span style="font-size:10px;color:#bbb;font-weight:400">（空欄行は無視）</span></span>
+    <div id="ccrows">${rows}</div>
+    <button class="addbtn" style="margin:.5rem 0" onclick="addERow('cc','ccrows')">＋ 行を追加</button>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem">
+      <button class="mbtn" onclick="closeModal()">キャンセル</button>
+      <button class="mbtn p" onclick="saveCCModal()">保存</button>
+    </div>`;
+  $('ov').classList.add('open');
+}
+
+function saveCCModal(){
+  const r = draftTD.rounds[window._ccri];
+  const c = draftTD.courts[r].find(x=>x.id===window._ccid);
+  c.cat = $('cccat').value.trim();
+  c.teams = collectERows('cc');
+  closeModal(); _renderCreateCourts();
+}
+
+function updateDraftRound(i,v){
+  const old=draftTD.rounds[i], cs=draftTD.courts[old];
+  draftTD.rounds[i]=v; delete draftTD.courts[old]; draftTD.courts[v]=cs;
+}
+function addDraftRound(){
+  const n='新ラウンド'+(draftTD.rounds.length+1);
+  draftTD.rounds.push(n); ensureDraftCourts(); createRI=draftTD.rounds.length-1; _renderCreate();
+}
+function delDraftRound(i){
+  if(draftTD.rounds.length<=1)return;
+  delete draftTD.courts[draftTD.rounds[i]]; draftTD.rounds.splice(i,1);
+  createRI=Math.min(createRI,draftTD.rounds.length-1); _renderCreate();
+}
+
+function saveDraftAndOpen(){
+  const el=$('dname'); if(el) draftTD.name=el.value.trim();
+  if(!draftTD.name){ alert('大会名を入力してください'); return; }
+  draftTD.rounds.forEach(r=>{
+    (draftTD.courts[r]||[]).forEach(c=>{ c.teams=c.teams.filter(t=>t.a||t.n); });
+  });
+  // Firebaseに保存
+  show('<div class="loading">保存中...</div>');
+  META(draftTD.id).set(draftTD).then(()=>{
+    CUR_ID = draftTD.id;
+    TD = clone(draftTD);
+    PROG_DATA = { currentRound: TD.rounds[0], courts:{} };
+    PROG(CUR_ID).set(PROG_DATA);
+    renderDash();
+    startProgListener(CUR_ID);
+  }).catch(e=>{
+    alert('保存に失敗しました: '+e.message);
+    _renderCreate();
+  });
+}
+
+// ─────────────────────────────────────────
+// ── ダッシュボード ──
+// ─────────────────────────────────────────
+function renderDash(){
+  if(!TD||!PROG_DATA) return;
+  const rHTML = TD.rounds.map(r=>
+    `<button class="rtab${r===PROG_DATA.currentRound?' on':''}" onclick="setRound('${esc(r)}')">${esc(r)}</button>`
+  ).join('') + `<button class="rtabadd" onclick="openAddRoundModal()">＋ ラウンド追加</button>`;
+
+  $('app').innerHTML=`
+    <div class="dhead">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="backbtn" onclick="renderHome()">← ホーム</button>
+        <div class="dtitle">${esc(TD.name)}</div>
+      </div>
+      <div class="syncpill"><span class="sdot" id="sdot"></span><span id="slabel" style="font-size:11px;color:#888">接続中...</span></div>
+    </div>
+    <div class="rtabs">${rHTML}</div>
+    <div class="sumbar">${buildSummary()}</div>
+    <div class="legend">
+      <div class="legitem"><div class="legdot" style="background:#1D9E75"></div>完了</div>
+      <div class="legitem"><div class="legdot" style="background:#378ADD"></div>進行中</div>
+      <div class="legitem"><div class="legdot" style="background:#E24B4A"></div>停止</div>
+      <div class="legitem"><div class="legdot" style="background:#BA7517"></div>残り1組</div>
+      <div class="legitem"><div class="legdot" style="background:#EF9F27"></div>残り2〜3組</div>
+      <div class="legitem"><div class="legdot" style="background:#e5e5e5"></div>待機</div>
+      <div class="legitem"><div class="legdot" style="background:#a5b4fc"></div>未使用</div>
+    </div>
+    <div class="alertwrap">${buildAlerts()}</div>
+    <div class="cgrid">${buildGrid()}</div>`;
+}
+
+function setRound(r){
+  PROG_DATA.currentRound=r; saveProg(); renderDash();
+}
+
+function courtStatus(c, cs){
+  const t=(c.teams||[]).length; if(!t)return 'inactive';
+  if(cs.stopped)return 'stopped'; if(cs.current>=t)return 'done';
+  const rem=t-cs.current;
+  if(cs.current>0&&rem===1)return 'last1'; if(cs.current>0&&rem<=3)return 'last3';
+  if(cs.current>0)return 'running'; return 'waiting';
+}
+
+function buildSummary(){
+  const courts = TD.courts[PROG_DATA.currentRound]||[];
+  let T=0,D=0,R=0,W=0,ST=0;
+  courts.forEach(c=>{
+    if(!c.teams) c.teams=[];
+    if(!c.teams.length)return; T++;
+    const st=courtStatus(c,progCS(PROG_DATA.currentRound,c.id));
+    if(st==='stopped')ST++; else if(st==='done')D++;
+    else if(st==='last1'||st==='last3'){R++;W++;} else if(st==='running')R++;
+  });
+  return [{n:T,l:'使用コート',c:'#1a1a1a'},{n:D,l:'完了',c:'#1D9E75'},{n:R,l:'進行中',c:'#378ADD'},{n:W,l:'残り1〜3組',c:'#BA7517'},{n:ST,l:'停止中',c:'#E24B4A'}]
+    .map(s=>`<div class="sumcard"><div class="sumn" style="color:${s.c}">${s.n}</div><div class="suml">${s.l}</div></div>`).join('');
+}
+
+function buildAlerts(){
+  return (TD.courts[PROG_DATA.currentRound]||[])
+    .filter(c=>c.teams.length&&progCS(PROG_DATA.currentRound,c.id).stopped)
+    .map(c=>{const cs=progCS(PROG_DATA.currentRound,c.id);
+      return `<div class="alertrow">⚠️ <strong>${c.id}コート（${esc(c.cat)}）</strong>：${esc(cs.stopReason||'停止中')}</div>`;}).join('');
+}
+
+function buildGrid(){
+  return (TD.courts[PROG_DATA.currentRound]||[]).map(c=>{
+    if(!c.teams) c.teams=[];
+    const cs=progCS(PROG_DATA.currentRound,c.id);
+    const t=c.teams.length,dn=Math.min(cs.current,t),pct=t?Math.round(dn/t*100):0,rem=t-dn;
+    const st=courtStatus(c,cs);
+    const bc={stopped:'#E24B4A',done:'#1D9E75',last1:'#BA7517',last3:'#EF9F27',running:'#378ADD'}[st]||'#378ADD';
+    let badge='';
+    if(st==='stopped')badge='<span class="badge bstop">停止</span>';
+    else if(st==='done')badge='<span class="badge bdone">✓ 完了</span>';
+    else if(st==='last1')badge='<span class="badge bl1">残り1組</span>';
+    else if(st==='last3')badge=`<span class="badge bl3">残り${rem}組</span>`;
+    else if(st==='running')badge='<span class="badge brun">進行中</span>';
+    else if(st==='waiting')badge='<span class="badge bwait">待機</span>';
+    else badge='<span class="badge bedit">未使用</span>';
+    const dots=t?c.teams.map((_,i)=>{
+      const bg=i<dn?(st==='stopped'?'#E24B4A':'#1D9E75'):i===dn&&dn<t?'#378ADD':'#e5e5e5';
+      const brd=i===dn&&dn<t&&st!=='stopped'?'outline:1.5px solid #378ADD;':'';
+      return `<div class="tdot" style="background:${bg};${brd}"></div>`;}).join(''):'';
+    const cls='ccard'+(['stopped','done','last1','last3'].includes(st)?' '+st:'');
+    return `<div class="${cls}" onclick="openCourtModal(${c.id})">
+      <div class="ctop"><div class="cnum">${c.id}</div>${badge}</div>
+      <div class="ccat">${esc(c.cat)||'（未設定）'}</div>
+      ${t?`<div class="barwrap"><div class="barfill" style="background:${bc};width:${pct}%"></div></div>
+      <div class="ccount"><span>${dn}/${t}</span><span>${pct}%</span></div>
+      <div class="tdots">${dots}</div>`:'<div class="edithint">クリックして設定・編集</div>'}
+    </div>`;}).join('');
+}
+
+// ─────────────────────────────────────────
+// ── ラウンド追加 ──
+// ─────────────────────────────────────────
+function openAddRoundModal(){
+  $('mod').innerHTML=`
+    <div class="mhead"><div class="mtitle">ラウンドを追加</div><button class="xbtn" onclick="closeModal()">×</button></div>
+    <label class="flabel" style="margin-top:.5rem">ラウンド名</label>
+    <input class="inp" id="newround" placeholder="例：決勝ラウンド" style="margin-bottom:1rem">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="mbtn" onclick="closeModal()">キャンセル</button>
+      <button class="mbtn p" onclick="doAddRound()">追加</button>
+    </div>`;
+  $('ov').classList.add('open');
+}
+function doAddRound(){
+  const n=($('newround').value||'').trim();
+  if(!n){alert('ラウンド名を入力してください');return;}
+  if(TD.rounds.includes(n)){alert('同じ名前が既にあります');return;}
+  TD.rounds.push(n);
+  TD.courts[n]=Array.from({length:16},(_,i)=>({id:i+1,cat:'',teams:[]}));
+  PROG_DATA.currentRound=n;
+  saveMeta(); saveProg(); closeModal(); renderDash();
+}
+
+// ─────────────────────────────────────────
+// ── コートモーダル ──
+// ─────────────────────────────────────────
+function openCourtModal(id){
+  modalCourtId=id; modalTab='prog'; stopFormOpen=false;
+  drawModal(); $('ov').classList.add('open');
+}
+function closeModal(){
+  $('ov').classList.remove('open'); modalCourtId=null; stopFormOpen=false;
+}
+$('ov').addEventListener('click',e=>{ if(e.target===$('ov')) closeModal(); });
+
+function drawModal(){
+  const c=(TD.courts[PROG_DATA.currentRound]||[]).find(x=>x.id===modalCourtId);
+  if(!c)return;
+  const cs=progCS(PROG_DATA.currentRound,modalCourtId);
+  $('mod').innerHTML=`
+    <div class="mhead"><div class="mtitle">${c.id}コート — ${esc(c.cat)||'未設定'}</div><button class="xbtn" onclick="closeModal()">×</button></div>
+    <div class="tabbar">
+      <button class="mtab${modalTab==='prog'?' on':''}" onclick="switchMTab('prog')">▶ 進行管理</button>
+      <button class="mtab${modalTab==='edit'?' on':''}" onclick="switchMTab('edit')">✏️ コート編集</button>
+    </div>
+    ${modalTab==='prog' ? drawProgTab(c,cs) : drawEditTab(c)}`;
+}
+
+function switchMTab(t){
+  if(modalTab==='edit') commitEdit();
+  modalTab=t; drawModal();
+}
+
+function drawProgTab(c,cs){
+  const t=c.teams.length,dn=cs.current,rem=t-dn;
+  if(!t) return `<div style="text-align:center;padding:2rem;color:#bbb;font-size:13px">チームが設定されていません。<br><button class="mbtn" style="margin-top:.75rem" onclick="switchMTab('edit')">✏️ 設定する</button></div>`;
+  const rows=c.teams.map((tm,i)=>{
+    const isDn=i<dn,isCur=!cs.stopped&&i===dn&&dn<t;
+    return `<div class="teamrow${isDn?' done':isCur?' cur':''}" onclick="toggleTeam(${i})">
+      <span class="ti">${i+1}</span><span class="ta">${esc(tm.a)}</span><span class="tn">${esc(tm.n)}</span>
+      ${isDn?'<span style="color:#1D9E75">✓</span>':isCur?'<span style="color:#378ADD">▶</span>':''}
+    </div>`;}).join('');
+  const sBanner=cs.stopped?`<div class="stopbanner"><span style="font-size:18px;flex-shrink:0">⚠️</span>
+    <div><div class="stopbanner-l">競技停止中</div><div>${esc(cs.stopReason||'—')}</div></div>
+    <button class="mbtn s" style="margin-left:auto;flex-shrink:0" onclick="doResume()">▶ 再開</button></div>`:'';
+  const sSec=!cs.stopped&&stopFormOpen?`<div class="stopform">
+    <div style="font-size:12px;font-weight:600;color:#E24B4A;margin-bottom:8px">⏸ 競技停止理由（省略可）</div>
+    <textarea id="stopinp" placeholder="例：選手の体調不良"></textarea>
+    <div style="display:flex;gap:6px">
+      <button class="mbtn d" onclick="doStop()">✓ 停止を確定</button>
+      <button class="mbtn" onclick="stopFormOpen=false;drawModal()">キャンセル</button>
+    </div></div>`:'';
+  const remTxt=!cs.stopped&&dn>0&&rem>0&&rem<=3?`<span style="font-weight:600;color:${rem===1?'#BA7517':'#EF9F27'}">（残り${rem}組）</span>`:'';
+  return `${sBanner}
+    <div style="font-size:12px;color:#999;margin-bottom:10px">${esc(PROG_DATA.currentRound)} ／ ${dn}/${t} 完了 ${remTxt}</div>
+    <div class="macts">
+      <button class="mbtn" onclick="prevTeam()">← 前へ</button>
+      <button class="mbtn p" onclick="nextTeam()">次へ →</button>
+      ${!cs.stopped&&!stopFormOpen?`<button class="mbtn d" onclick="stopFormOpen=true;drawModal()">⏸ 停止</button>`:''}
+    </div>${sSec}<div class="teamlist">${rows}</div>`;
+}
+
+function drawEditTab(c){
+  const n=Math.max(c.teams.length,2);
+  const rows=Array.from({length:n},(_,i)=>buildERow('et',i,c.teams[i]?.a||'',c.teams[i]?.n||'')).join('');
+  return `<div>
+    <label class="flabel">種目名</label>
+    <input class="inp" id="etcat" value="${esc(c.cat)}" placeholder="例：男子初段" style="margin-bottom:12px">
+    <span class="eplabel">出場チーム <span style="font-size:10px;color:#bbb;font-weight:400">（空欄行は無視）</span></span>
+    <div id="etrows">${rows}</div>
+    <button class="addbtn" style="margin:.5rem 0" onclick="addERow('et','etrows')">＋ 行を追加</button>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem">
+      <button class="mbtn" onclick="closeModal()">キャンセル</button>
+      <button class="mbtn p" onclick="saveEdit()">保存</button>
+    </div></div>`;
+}
+
+function commitEdit(){
+  const c=(TD.courts[PROG_DATA.currentRound]||[]).find(x=>x.id===modalCourtId); if(!c)return;
+  const el=$('etcat'); if(el) c.cat=el.value.trim();
+  const teams=collectERows('et'); c.teams=teams;
+  const cs=progCS(PROG_DATA.currentRound,modalCourtId); if(cs.current>teams.length) cs.current=teams.length;
+}
+function saveEdit(){
+  commitEdit(); saveMeta(); saveProg(); modalTab='prog'; drawModal(); renderDash();
+}
+
+// ─────────────────────────────────────────
+// 行の追加・収集
+// ─────────────────────────────────────────
+function buildERow(p,i,a,n){
+  return `<div class="erow" id="${p}row${i}"><span class="ei">${i+1}</span>
+    <input class="inp ea" placeholder="大学名" value="${esc(a)}" id="${p}a${i}">
+    <input class="inp en" placeholder="名前" value="${esc(n)}" id="${p}n${i}">
+  </div>`;
+}
+function addERow(p,cid){
+  const el=$(cid); if(!el)return;
+  let i=0; while($(p+'a'+i))i++;
+  el.insertAdjacentHTML('beforeend',buildERow(p,i,'',''));
+  $(p+'row'+i)?.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function collectERows(p){
+  const out=[]; let i=0;
+  while(true){
+    const a=$(p+'a'+i), n=$(p+'n'+i); if(!a)break;
+    if(a.value.trim()||n.value.trim()) out.push({a:a.value.trim(),n:n.value.trim()});
+    i++;
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────
+// 進行操作
+// ─────────────────────────────────────────
+function doStop(){
+  const inp=$('stopinp');
+  const cs=progCS(PROG_DATA.currentRound,modalCourtId);
+  cs.stopped=true; cs.stopReason=(inp?inp.value.trim():'')||'競技停止中';
+  saveProg(); drawModal(); renderDash();
+}
+function doResume(){
+  const cs=progCS(PROG_DATA.currentRound,modalCourtId);
+  cs.stopped=false; cs.stopReason='';
+  saveProg(); drawModal(); renderDash();
+}
+function nextTeam(){
+  const cs=progCS(PROG_DATA.currentRound,modalCourtId);
+  const c=(TD.courts[PROG_DATA.currentRound]||[]).find(x=>x.id===modalCourtId);
+  if(c&&cs.current<c.teams.length){ cs.current++; saveProg(); drawModal(); renderDash(); }
+}
+function prevTeam(){
+  const cs=progCS(PROG_DATA.currentRound,modalCourtId);
+  if(cs.current>0){ cs.current--; saveProg(); drawModal(); renderDash(); }
+}
+function toggleTeam(idx){
+  const cs=progCS(PROG_DATA.currentRound,modalCourtId);
+  cs.current=idx<cs.current?idx:idx+1;
+  saveProg(); drawModal(); renderDash();
+}
+
+// ─────────────────────────────────────────
+// 起動
+// ─────────────────────────────────────────
+renderHome();
+</script>
+</body>
+</html>
